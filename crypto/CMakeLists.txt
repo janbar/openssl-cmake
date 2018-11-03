@@ -52,10 +52,10 @@ configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/bn_conf.h.cmake ${CMAKE_CURRENT_BINA
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/dso_conf.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/internal/dso_conf.h )
 
 set( LIBSRC
-  cpt_err.c cryptlib.c cversion.c ebcdic.c ex_data.c init.c mem.c mem_clr.c mem_dbg.c mem_sec.c o_dir.c o_fips.c
+  cpt_err.c cryptlib.c ctype.c cversion.c ebcdic.c ex_data.c init.c mem.c mem_clr.c mem_dbg.c mem_sec.c o_dir.c o_fips.c
   o_fopen.c o_init.c o_str.c o_time.c uid.c )
 
-include_directories( BEFORE SYSTEM include modes )
+include_directories( BEFORE SYSTEM include modes ec/curve448 ec/curve448/arch_32 )
 
 if( BUILD_SHARED_LIBS )
   add_definitions( -DOPENSSL_BUILD_SHLIBCRYPTO )
@@ -81,11 +81,13 @@ macro( add_submodule dir )
 endmacro( add_submodule )
 
 add_submodule ( aes aes_cbc.c aes_cfb.c aes_core.c aes_ecb.c aes_ige.c aes_misc.c aes_ofb.c
-  aes_wrap.c EXHEADERS aes.h )
+  aes_wrap.c aes_x86core.c )
+
+add_submodule ( aria aria.c )
 
 add_submodule ( asn1 a_bitstr.c a_d2i_fp.c a_digest.c a_dup.c a_gentm.c a_i2d_fp.c a_int.c
   a_mbstr.c a_object.c a_octet.c a_print.c a_sign.c a_strex.c a_strnid.c a_time.c a_type.c
-  a_utctm.c a_utf8.c a_verify.c ameth_lib.c asn1_err.c asn1_gen.c asn1_lib.c asn1_par.c
+  a_utctm.c a_utf8.c a_verify.c ameth_lib.c asn1_err.c asn1_gen.c asn1_item_list.c asn1_lib.c asn1_par.c
   asn_mime.c asn_moid.c asn_mstbl.c asn_pack.c bio_asn1.c bio_ndef.c d2i_pr.c d2i_pu.c
   evp_asn1.c f_int.c f_string.c i2d_pr.c i2d_pu.c n_pkey.c nsseq.c p5_pbe.c p5_pbev2.c
   p5_scrypt.c p8_pkey.c t_bitst.c t_pkey.c t_spki.c tasn_dec.c tasn_enc.c tasn_fre.c
@@ -106,7 +108,7 @@ add_submodule ( blake2 blake2b.c blake2s.c m_blake2b.c m_blake2s.c )
 add_submodule ( bn bn_add.c bn_asm.c bn_blind.c bn_const.c bn_ctx.c bn_depr.c bn_dh.c
   bn_div.c bn_err.c bn_exp.c bn_exp2.c bn_gcd.c bn_gf2m.c bn_intern.c bn_kron.c bn_lib.c
   bn_mod.c bn_mont.c bn_mpi.c bn_mul.c bn_nist.c bn_prime.c bn_print.c bn_rand.c bn_recp.c
-  bn_shift.c bn_sqr.c bn_sqrt.c bn_srp.c bn_word.c bn_x931p.c )
+  bn_shift.c bn_sqr.c bn_sqrt.c bn_srp.c bn_word.c bn_x931p.c rsaz_exp.c )
 
 add_submodule ( buffer buf_err.c buffer.c )
 
@@ -131,11 +133,11 @@ add_submodule ( ct ct_b64.c ct_err.c ct_log.c ct_oct.c ct_policy.c ct_prn.c ct_s
   ct_sct_ctx.c ct_vfy.c ct_x509v3.c )
 
 add_submodule ( des cbc_cksm.c cbc_enc.c cfb64ede.c cfb64enc.c cfb_enc.c des_enc.c
-  ecb3_enc.c ecb_enc.c fcrypt.c fcrypt_b.c ofb64ede.c ofb64enc.c ofb_enc.c pcbc_enc.c
-  qud_cksm.c rand_key.c rpc_enc.c set_key.c str2key.c xcbc_enc.c )
+  ecb3_enc.c ecb_enc.c fcrypt.c fcrypt_b.c ncbc_enc.c ofb64ede.c ofb64enc.c ofb_enc.c pcbc_enc.c
+  qud_cksm.c rand_key.c set_key.c str2key.c xcbc_enc.c )
 
 add_submodule ( dh dh_ameth.c dh_asn1.c dh_check.c dh_depr.c dh_err.c dh_gen.c dh_kdf.c
-  dh_key.c dh_lib.c dh_meth.c dh_pmeth.c dh_prn.c dh_rfc5114.c )
+  dh_key.c dh_lib.c dh_meth.c dh_pmeth.c dh_prn.c dh_rfc5114.c dh_rfc7919.c )
 
 add_submodule ( dsa dsa_ameth.c dsa_asn1.c dsa_depr.c dsa_err.c dsa_gen.c dsa_key.c
   dsa_lib.c dsa_meth.c dsa_ossl.c dsa_pmeth.c dsa_prn.c dsa_sign.c dsa_vrf.c )
@@ -143,13 +145,15 @@ add_submodule ( dsa dsa_ameth.c dsa_asn1.c dsa_depr.c dsa_err.c dsa_gen.c dsa_ke
 add_submodule ( dso dso_dl.c dso_dlfcn.c dso_err.c dso_lib.c dso_openssl.c dso_vms.c
   dso_win32.c )
 
-add_submodule ( ec curve25519.c ec2_mult.c ec2_oct.c ec2_smpl.c ec_ameth.c ec_asn1.c
+add_submodule ( ec curve25519.c ec2_oct.c ec2_smpl.c ec_ameth.c ec_asn1.c
   ec_check.c ec_curve.c ec_cvt.c ec_err.c ec_key.c ec_kmeth.c ec_lib.c ec_mult.c
   ec_oct.c ec_pmeth.c ec_print.c ecdh_kdf.c ecdh_ossl.c ecdsa_ossl.c ecdsa_sign.c
   ecdsa_vrf.c eck_prn.c ecp_mont.c ecp_nist.c ecp_nistp224.c ecp_nistp256.c ecp_nistp521.c
-  ecp_nistputil.c ecp_oct.c ecp_smpl.c ecx_meth.c )
+  ecp_nistputil.c ecp_oct.c ecp_smpl.c ecx_meth.c
+  curve448/curve448.c curve448/curve448_tables.c curve448/eddsa.c curve448/f_generic.c
+  curve448/scalar.c curve448/arch_32/f_impl.c )
 
-add_submodule ( engine eng_all.c eng_cnf.c eng_cryptodev.c eng_ctrl.c eng_dyn.c eng_err.c
+add_submodule ( engine eng_all.c eng_cnf.c eng_ctrl.c eng_dyn.c eng_err.c
   eng_fat.c eng_init.c eng_lib.c eng_list.c eng_openssl.c eng_pkey.c eng_rdrand.c
   eng_table.c tb_asnmth.c tb_cipher.c tb_dh.c tb_digest.c tb_dsa.c tb_eckey.c tb_pkmeth.c
   tb_rand.c tb_rsa.c )
@@ -157,19 +161,19 @@ add_submodule ( engine eng_all.c eng_cnf.c eng_cryptodev.c eng_ctrl.c eng_dyn.c 
 add_submodule ( err err.c err_all.c err_prn.c )
 
 add_submodule ( evp bio_b64.c bio_enc.c bio_md.c bio_ok.c c_allc.c c_alld.c cmeth_lib.c
-  digest.c e_aes.c e_aes_cbc_hmac_sha1.c e_aes_cbc_hmac_sha256.c e_bf.c e_camellia.c
+  digest.c e_aes.c e_aes_cbc_hmac_sha1.c e_aes_cbc_hmac_sha256.c e_aria.c e_bf.c e_camellia.c
   e_cast.c e_chacha20_poly1305.c e_des.c e_des3.c e_idea.c e_null.c e_old.c e_rc2.c
-  e_rc4.c e_rc4_hmac_md5.c e_rc5.c e_seed.c e_xcbc_d.c encode.c evp_cnf.c evp_enc.c
+  e_rc4.c e_rc4_hmac_md5.c e_rc5.c e_sm4.c e_seed.c e_xcbc_d.c encode.c evp_cnf.c evp_enc.c
   evp_err.c evp_key.c evp_lib.c evp_pbe.c evp_pkey.c m_md2.c m_md4.c m_md5.c m_md5_sha1.c
-  m_mdc2.c m_null.c m_ripemd.c m_sha1.c m_sigver.c m_wp.c names.c p5_crpt.c p5_crpt2.c
-  p_dec.c p_enc.c p_lib.c p_open.c p_seal.c p_sign.c p_verify.c pmeth_fn.c pmeth_gn.c
-  pmeth_lib.c scrypt.c )
+  m_sha3.c m_mdc2.c m_null.c m_ripemd.c m_sha1.c m_sigver.c m_wp.c names.c p5_crpt.c p5_crpt2.c
+  p_dec.c p_enc.c p_lib.c p_open.c p_seal.c p_sign.c p_verify.c pbe_scrypt.c
+  pmeth_fn.c pmeth_gn.c pmeth_lib.c )
 
 add_submodule ( hmac hm_ameth.c hm_pmeth.c hmac.c )
 
 add_submodule ( idea i_cbc.c i_cfb64.c i_ecb.c i_ofb64.c i_skey.c )
 
-add_submodule ( kdf hkdf.c kdf_err.c tls1_prf.c )
+add_submodule ( kdf hkdf.c kdf_err.c scrypt.c tls1_prf.c )
 
 add_submodule ( lhash lh_stats.c lhash.c )
 
@@ -197,35 +201,47 @@ add_submodule ( pkcs12 p12_add.c p12_asn.c p12_attr.c p12_crpt.c p12_crt.c p12_d
 add_submodule ( pkcs7 bio_pk7.c pk7_asn1.c pk7_attr.c pk7_doit.c pk7_lib.c pk7_mime.c
   pk7_smime.c pkcs7err.c )
 
-add_submodule ( poly1305 poly1305.c )
+add_submodule ( poly1305 poly1305.c poly1305_ameth.c poly1305_ieee754.c poly1305_pmeth.c)
 
-add_submodule ( rand md_rand.c rand_egd.c rand_err.c rand_lib.c rand_unix.c rand_vms.c
+add_submodule ( rand drbg_ctr.c drbg_lib.c rand_egd.c rand_err.c rand_lib.c rand_unix.c rand_vms.c
  rand_win.c randfile.c )
 
 add_submodule ( rc2 rc2_cbc.c rc2_ecb.c rc2_skey.c rc2cfb64.c rc2ofb64.c )
 
 add_submodule ( rc4 rc4_enc.c rc4_skey.c )
 
+#add_submodule ( rc5 rc5_ecb.c rc5_enc.c rc5_skey.c rc5cfb64.c rc5ofb64.c )
+
 add_submodule ( ripemd rmd_dgst.c rmd_one.c )
 
 add_submodule ( rsa rsa_ameth.c rsa_asn1.c rsa_chk.c rsa_crpt.c rsa_depr.c rsa_err.c
-  rsa_gen.c rsa_lib.c rsa_meth.c rsa_none.c rsa_null.c rsa_oaep.c rsa_ossl.c rsa_pk1.c
+  rsa_gen.c rsa_lib.c rsa_meth.c rsa_mp.c rsa_none.c rsa_oaep.c rsa_ossl.c rsa_pk1.c
   rsa_pmeth.c rsa_prn.c rsa_pss.c rsa_saos.c rsa_sign.c rsa_ssl.c rsa_x931.c rsa_x931g.c )
 
 add_submodule ( seed seed.c seed_cbc.c seed_cfb.c seed_ecb.c seed_ofb.c )
 
-add_submodule ( sha sha1_one.c sha1dgst.c sha256.c sha512.c )
+add_submodule ( sha keccak1600.c sha1_one.c sha1dgst.c sha256.c sha512.c )
+ 
+add_submodule ( siphash siphash.c siphash_ameth.c siphash_pmeth.c )
+
+add_submodule ( sm2 sm2_crypt.c sm2_err.c sm2_pmeth.c sm2_sign.c )
+
+add_submodule ( sm3 m_sm3.c sm3.c )
+
+add_submodule ( sm4 sm4.c )
 
 add_submodule ( srp srp_lib.c srp_vfy.c )
 
 add_submodule ( stack stack.c )
+
+add_submodule ( store loader_file.c store_err.c store_init.c store_lib.c store_register.c store_strings.c )
 
 add_submodule ( ts ts_asn1.c ts_conf.c ts_err.c ts_lib.c ts_req_print.c ts_req_utils.c
   ts_rsp_print.c ts_rsp_sign.c ts_rsp_utils.c ts_rsp_verify.c ts_verify_ctx.c )
 
 add_submodule ( txt_db txt_db.c )
 
-add_submodule ( ui ui_err.c ui_lib.c ui_openssl.c ui_util.c )
+add_submodule ( ui ui_err.c ui_lib.c ui_null.c ui_openssl.c ui_util.c )
 
 add_submodule ( whrlpool wp_block.c wp_dgst.c )
 
@@ -236,7 +252,7 @@ add_submodule ( x509 by_dir.c by_file.c t_crl.c t_req.c t_x509.c x509_att.c x509
   x_pubkey.c x_req.c x_x509.c x_x509a.c )
 
 add_submodule ( x509v3 pcy_cache.c pcy_data.c pcy_lib.c pcy_map.c pcy_node.c pcy_tree.c
-  v3_addr.c v3_akey.c v3_akeya.c v3_alt.c v3_asid.c v3_bcons.c v3_bitst.c v3_conf.c v3_cpols.c
+  v3_addr.c v3_admis.c v3_akey.c v3_akeya.c v3_alt.c v3_asid.c v3_bcons.c v3_bitst.c v3_conf.c v3_cpols.c
   v3_crld.c v3_enum.c v3_extku.c v3_genn.c v3_ia5.c v3_info.c v3_int.c v3_lib.c v3_ncons.c
   v3_pci.c v3_pcia.c v3_pcons.c v3_pku.c v3_pmaps.c v3_prn.c v3_purp.c v3_skey.c v3_sxnet.c
   v3_tlsf.c v3_utl.c v3err.c )
