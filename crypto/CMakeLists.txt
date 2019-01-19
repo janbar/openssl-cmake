@@ -81,7 +81,7 @@ macro( add_submodule dir )
 endmacro( add_submodule )
 
 add_submodule ( aes aes_cbc.c aes_cfb.c aes_core.c aes_ecb.c aes_ige.c aes_misc.c aes_ofb.c
-  aes_wrap.c aes_x86core.c )
+  aes_wrap.c )
 
 add_submodule ( aria aria.c )
 
@@ -133,7 +133,7 @@ add_submodule ( ct ct_b64.c ct_err.c ct_log.c ct_oct.c ct_policy.c ct_prn.c ct_s
   ct_sct_ctx.c ct_vfy.c ct_x509v3.c )
 
 add_submodule ( des cbc_cksm.c cbc_enc.c cfb64ede.c cfb64enc.c cfb_enc.c des_enc.c
-  ecb3_enc.c ecb_enc.c fcrypt.c fcrypt_b.c ncbc_enc.c ofb64ede.c ofb64enc.c ofb_enc.c pcbc_enc.c
+  ecb3_enc.c ecb_enc.c fcrypt.c fcrypt_b.c ofb64ede.c ofb64enc.c ofb_enc.c pcbc_enc.c
   qud_cksm.c rand_key.c set_key.c str2key.c xcbc_enc.c )
 
 add_submodule ( dh dh_ameth.c dh_asn1.c dh_check.c dh_depr.c dh_err.c dh_gen.c dh_kdf.c
@@ -201,7 +201,7 @@ add_submodule ( pkcs12 p12_add.c p12_asn.c p12_attr.c p12_crpt.c p12_crt.c p12_d
 add_submodule ( pkcs7 bio_pk7.c pk7_asn1.c pk7_attr.c pk7_doit.c pk7_lib.c pk7_mime.c
   pk7_smime.c pkcs7err.c )
 
-add_submodule ( poly1305 poly1305.c poly1305_ameth.c poly1305_ieee754.c poly1305_pmeth.c)
+add_submodule ( poly1305 poly1305.c poly1305_ameth.c poly1305_pmeth.c)
 
 add_submodule ( rand drbg_ctr.c drbg_lib.c rand_egd.c rand_err.c rand_lib.c rand_unix.c rand_vms.c
  rand_win.c randfile.c )
