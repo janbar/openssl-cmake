@@ -30,13 +30,13 @@ cmake_minimum_required( VERSION 3.1.0 )
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 option(WITH_APPS "Build applications" ON)
 
 # OpenSSL version detection imported from FindOpenSSL.cmake
 
-file(STRINGS "${CMAKE_SOURCE_DIR}/include/openssl/opensslv.h" openssl_version_str
+file(STRINGS "${PROJECT_SOURCE_DIR}/include/openssl/opensslv.h" openssl_version_str
   REGEX "^#[\t ]*define[\t ]+OPENSSL_VERSION_NUMBER[\t ]+0x([0-9a-fA-F])+.*")
 
 function(from_hex HEX DEC)
@@ -156,10 +156,16 @@ if ( WIN32 AND MINGW AND NOT CYGWIN )
   set( OPENSSL_EXPORT_VAR_AS_FUNCTION true )
 endif()
 
+if ( ANDROID )
+  set ( BUILD_SHARED_LIBS ON )
+elseif ( IOS )
+  set ( BUILD_SHARED_LIBS OFF )
+endif()
+
 add_subdirectory(crypto)
 add_subdirectory(ssl)
 
-if(WITH_APPS)
+if(WITH_APPS AND NOT ANDROID AND NOT IOS)
   add_subdirectory(apps)
 endif()
 
