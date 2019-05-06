@@ -39,11 +39,8 @@ set ( LIBSRC
   statem/statem_lib.c statem/statem_srvr.c
   )
 
-if( ANDROID )
-  add_library ( ssl SHARED ${LIBSRC} )
-else()
-  add_library ( ssl ${LIBSRC} )
-endif()
+add_library( ssl ${LIBSRC} )
+
 target_link_libraries ( ssl crypto )
 
 set_target_properties( ssl PROPERTIES

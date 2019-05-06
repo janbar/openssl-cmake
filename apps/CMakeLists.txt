@@ -45,6 +45,12 @@ set ( E_SRC
   s_client.c s_server.c s_socket.c s_time.c sess_id.c smime.c speed.c spkac.c storeutl.c srp.c
   ts.c verify.c version.c x509.c )
 
+if ( WIN32 )
+  if ( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/win32_init.c" )
+    list( APPEND E_SRC win32_init.c )
+  endif()
+endif()
+
 add_executable ( openssl ${E_SRC} )
 target_link_libraries ( openssl crypto ssl )
 
