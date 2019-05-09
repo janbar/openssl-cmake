@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -73,8 +73,6 @@ static KEY_LIST *public_keys;
 static int find_key(EVP_PKEY **ppk, const char *name, KEY_LIST *lst);
 
 static int parse_bin(const char *value, unsigned char **buf, size_t *buflen);
-static int pkey_test_ctrl(EVP_TEST *t, EVP_PKEY_CTX *pctx,
-                          const char *value);
 
 /*
  * Compare two memory regions for equality, returning zero if they differ.
@@ -459,7 +457,7 @@ typedef struct cipher_data_st {
     size_t plaintext_len;
     unsigned char *ciphertext;
     size_t ciphertext_len;
-    /* GCM, CCM only */
+    /* GCM, CCM and OCB only */
     unsigned char *aad;
     size_t aad_len;
     unsigned char *tag;
@@ -487,7 +485,7 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
     if (m == EVP_CIPH_GCM_MODE
             || m == EVP_CIPH_OCB_MODE
             || m == EVP_CIPH_CCM_MODE)
-        cdat->aead = EVP_CIPHER_mode(cipher);
+        cdat->aead = m;
     else if (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)
         cdat->aead = -1;
     else
@@ -927,6 +925,28 @@ static int mac_test_parse(EVP_TEST *t,
     return 0;
 }
 
+static int mac_test_ctrl_pkey(EVP_TEST *t, EVP_PKEY_CTX *pctx,
+                              const char *value)
+{
+    int rv;
+    char *p, *tmpval;
+
+    if (!TEST_ptr(tmpval = OPENSSL_strdup(value)))
+        return 0;
+    p = strchr(tmpval, ':');
+    if (p != NULL)
+        *p++ = '\0';
+    rv = EVP_PKEY_CTX_ctrl_str(pctx, tmpval, p);
+    if (rv == -2)
+        t->err = "PKEY_CTRL_INVALID";
+    else if (rv <= 0)
+        t->err = "PKEY_CTRL_ERROR";
+    else
+        rv = 1;
+    OPENSSL_free(tmpval);
+    return rv > 0;
+}
+
 static int mac_test_run(EVP_TEST *t)
 {
     MAC_DATA *expected = t->data;
@@ -972,8 +992,9 @@ static int mac_test_run(EVP_TEST *t)
         goto err;
     }
     for (i = 0; i < sk_OPENSSL_STRING_num(expected->controls); i++)
-        if (!pkey_test_ctrl(t, pctx,
-                            sk_OPENSSL_STRING_value(expected->controls, i))) {
+        if (!mac_test_ctrl_pkey(t, pctx,
+                                sk_OPENSSL_STRING_value(expected->controls,
+                                                        i))) {
             t->err = "EVPPKEYCTXCTRL_ERROR";
             goto err;
         }
@@ -1538,15 +1559,18 @@ static int encode_test_init(EVP_TEST *t, const char *encoding)
     } else if (strcmp(encoding, "invalid") == 0) {
         edata->encoding = BASE64_INVALID_ENCODING;
         if (!TEST_ptr(t->expected_err = OPENSSL_strdup("DECODE_ERROR")))
-            return 0;
+            goto err;
     } else {
         TEST_error("Bad encoding: %s."
                    " Should be one of {canonical, valid, invalid}",
                    encoding);
-        return 0;
+        goto err;
     }
     t->data = edata;
     return 1;
+err:
+    OPENSSL_free(edata);
+    return 0;
 }
 
 static void encode_test_cleanup(EVP_TEST *t)
@@ -1575,7 +1599,7 @@ static int encode_test_run(EVP_TEST *t)
     ENCODE_DATA *expected = t->data;
     unsigned char *encode_out = NULL, *decode_out = NULL;
     int output_len, chunk_len;
-    EVP_ENCODE_CTX *decode_ctx;
+    EVP_ENCODE_CTX *decode_ctx = NULL, *encode_ctx = NULL;
 
     if (!TEST_ptr(decode_ctx = EVP_ENCODE_CTX_new())) {
         t->err = "INTERNAL_ERROR";
@@ -1583,7 +1607,6 @@ static int encode_test_run(EVP_TEST *t)
     }
 
     if (expected->encoding == BASE64_CANONICAL_ENCODING) {
-        EVP_ENCODE_CTX *encode_ctx;
 
         if (!TEST_ptr(encode_ctx = EVP_ENCODE_CTX_new())
                 || !TEST_ptr(encode_out =
@@ -1591,14 +1614,14 @@ static int encode_test_run(EVP_TEST *t)
             goto err;
 
         EVP_EncodeInit(encode_ctx);
-        EVP_EncodeUpdate(encode_ctx, encode_out, &chunk_len,
-                         expected->input, expected->input_len);
+        if (!TEST_true(EVP_EncodeUpdate(encode_ctx, encode_out, &chunk_len,
+                                        expected->input, expected->input_len)))
+            goto err;
+
         output_len = chunk_len;
 
         EVP_EncodeFinal(encode_ctx, encode_out + chunk_len, &chunk_len);
         output_len += chunk_len;
-
-        EVP_ENCODE_CTX_free(encode_ctx);
 
         if (!memory_err_compare(t, "BAD_ENCODING",
                                 expected->output, expected->output_len,
@@ -1637,6 +1660,7 @@ static int encode_test_run(EVP_TEST *t)
     OPENSSL_free(encode_out);
     OPENSSL_free(decode_out);
     EVP_ENCODE_CTX_free(decode_ctx);
+    EVP_ENCODE_CTX_free(encode_ctx);
     return 1;
 }
 
@@ -2614,8 +2638,8 @@ top:
                 return 0;
             }
             if (rv < 0) {
-                TEST_info("Line %d: error processing keyword %s\n",
-                        t->s.curr, pp->key);
+                TEST_info("Line %d: error processing keyword %s = %s\n",
+                          t->s.curr, pp->key, pp->value);
                 return 0;
             }
         }
