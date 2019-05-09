@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -28,9 +28,6 @@
 #define CCS_MAX_LENGTH                  1
 /* Max should actually be 36 but we are generous */
 #define FINISHED_MAX_LENGTH             64
-
-/* The maximum number of incoming KeyUpdate messages we will accept */
-#define MAX_KEY_UPDATE_MESSAGES     32
 
 /* Dummy message type */
 #define SSL3_MT_DUMMY   -1
@@ -61,7 +58,8 @@ int create_synthetic_message_hash(SSL *s, const unsigned char *hashval,
                                   size_t hashlen, const unsigned char *hrr,
                                   size_t hrrlen);
 int parse_ca_names(SSL *s, PACKET *pkt);
-int construct_ca_names(SSL *s, WPACKET *pkt);
+const STACK_OF(X509_NAME) *get_ca_names(SSL *s);
+int construct_ca_names(SSL *s, const STACK_OF(X509_NAME) *ca_sk, WPACKET *pkt);
 size_t construct_key_exchange_tbs(SSL *s, unsigned char **ptbs,
                                   const void *param, size_t paramlen);
 

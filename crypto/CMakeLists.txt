@@ -53,7 +53,7 @@ configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/dso_conf.h.cmake ${CMAKE_CURRENT_BIN
 
 set( LIBSRC
   cpt_err.c cryptlib.c ctype.c cversion.c ebcdic.c ex_data.c init.c mem.c mem_clr.c mem_dbg.c mem_sec.c o_dir.c o_fips.c
-  o_fopen.c o_init.c o_str.c o_time.c uid.c )
+  o_fopen.c o_init.c o_str.c o_time.c uid.c getenv.c )
 
 include_directories( BEFORE SYSTEM include modes ec/curve448 ec/curve448/arch_32 )
 
