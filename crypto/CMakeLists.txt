@@ -277,6 +277,9 @@ endif()
 
 set_target_properties( crypto PROPERTIES
   VERSION "${LIB_VERSION}" SOVERSION "${LIB_SOVERSION}" )
+if( ANDROID )
+  set_target_properties( crypto PROPERTIES LIBRARY_OUTPUT_NAME "crypto_1_1" )
+endif()
 
 install( TARGETS crypto
     RUNTIME DESTINATION bin
