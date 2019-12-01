@@ -1,11 +1,5 @@
-
 macro(configure_msvc_runtime)
 	if(MSVC)
-		# Default to statically-linked runtime.
-		if("${MSVC_RUNTIME}" STREQUAL "")
-			set(MSVC_RUNTIME "static")
-		endif()
-
 		# Set compiler options.
 		set(variables
 			CMAKE_C_FLAGS
@@ -19,20 +13,17 @@ macro(configure_msvc_runtime)
 			CMAKE_CXX_FLAGS_RELEASE
 			CMAKE_CXX_FLAGS_RELWITHDEBINFO)
 
-		if(${MSVC_RUNTIME} STREQUAL "static")
-			message(STATUS "MSVC: using statically-linked runtime (/MT and /MTd).")
-			foreach(variable ${variables})
-				if(${variable} MATCHES "/MD")
-					string(REGEX REPLACE "/MD" "/MT" ${variable} "${${variable}}")
-				endif()
-			endforeach()
+		if(BUILD_SHARED_LIBS)
+			set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 		else()
-			message(STATUS "MSVC: using dynamically-linked runtime (/MD and /MDd).")
-			foreach(variable ${variables})
-				if(${variable} MATCHES "/MT")
-					string(REGEX REPLACE "/MT" "/MD" ${variable} "${${variable}}")
-				endif()
-			endforeach()
+			if(NOT MSVC_DYNAMIC_RUNTIME)
+				message(STATUS "MSVC: using statically-linked runtime (/MT and /MTd).")
+				foreach(variable ${variables})
+					if(${variable} MATCHES "/MD")
+						string(REGEX REPLACE "/MD" "/MT" ${variable} "${${variable}}")
+					endif()
+				endforeach()
+			endif()
 		endif()
 
 		foreach(variable ${variables})
