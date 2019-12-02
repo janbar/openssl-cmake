@@ -9,6 +9,9 @@
 
 #ifndef HEADER_DSO_CONF_H
 # define HEADER_DSO_CONF_H
-
 # define DSO_EXTENSION "@DSO_EXTENSION@"
+#cmakedefine DSO_NONE
+#cmakedefine DSO_WIN32
+#cmakedefine DSO_DLFCN
+#cmakedefine HAVE_DLFCN_H
 #endif

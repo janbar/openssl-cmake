@@ -403,6 +403,28 @@ static int digest_test_run(EVP_TEST *t)
     }
 
     if (EVP_MD_flags(expected->digest) & EVP_MD_FLAG_XOF) {
+        EVP_MD_CTX *mctx_cpy;
+        char dont[] = "touch";
+
+        if (!TEST_ptr(mctx_cpy = EVP_MD_CTX_new())) {
+            goto err;
+        }
+        if (!EVP_MD_CTX_copy(mctx_cpy, mctx)) {
+            EVP_MD_CTX_free(mctx_cpy);
+            goto err;
+        }
+        if (!EVP_DigestFinalXOF(mctx_cpy, (unsigned char *)dont, 0)) {
+            EVP_MD_CTX_free(mctx_cpy);
+            t->err = "DIGESTFINALXOF_ERROR";
+            goto err;
+        }
+        if (!TEST_str_eq(dont, "touch")) {
+            EVP_MD_CTX_free(mctx_cpy);
+            t->err = "DIGESTFINALXOF_ERROR";
+            goto err;
+        }
+        EVP_MD_CTX_free(mctx_cpy);
+
         got_len = expected->output_len;
         if (!EVP_DigestFinalXOF(mctx, got, got_len)) {
             t->err = "DIGESTFINALXOF_ERROR";
@@ -462,6 +484,7 @@ typedef struct cipher_data_st {
     size_t aad_len;
     unsigned char *tag;
     size_t tag_len;
+    int tag_late;
 } CIPHER_DATA;
 
 static int cipher_test_init(EVP_TEST *t, const char *alg)
@@ -525,6 +548,15 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
             return parse_bin(value, &cdat->aad, &cdat->aad_len);
         if (strcmp(keyword, "Tag") == 0)
             return parse_bin(value, &cdat->tag, &cdat->tag_len);
+        if (strcmp(keyword, "SetTagLate") == 0) {
+            if (strcmp(value, "TRUE") == 0)
+                cdat->tag_late = 1;
+            else if (strcmp(value, "FALSE") == 0)
+                cdat->tag_late = 0;
+            else
+                return -1;
+            return 1;
+        }
     }
 
     if (strcmp(keyword, "Operation") == 0) {
@@ -533,7 +565,7 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
         else if (strcmp(value, "DECRYPT") == 0)
             cdat->enc = 0;
         else
-            return 0;
+            return -1;
         return 1;
     }
     return 0;
@@ -610,7 +642,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
          * If encrypting or OCB just set tag length initially, otherwise
          * set tag length and value.
          */
-        if (enc || expected->aead == EVP_CIPH_OCB_MODE) {
+        if (enc || expected->aead == EVP_CIPH_OCB_MODE || expected->tag_late) {
             t->err = "TAG_LENGTH_SET_ERROR";
             tag = NULL;
         } else {
@@ -631,14 +663,6 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
     if (!EVP_CipherInit_ex(ctx, NULL, NULL, expected->key, expected->iv, -1)) {
         t->err = "KEY_SET_ERROR";
         goto err;
-    }
-
-    if (!enc && expected->aead == EVP_CIPH_OCB_MODE) {
-        if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
-                                 expected->tag_len, expected->tag)) {
-            t->err = "TAG_SET_ERROR";
-            goto err;
-        }
     }
 
     if (expected->aead == EVP_CIPH_CCM_MODE) {
@@ -675,6 +699,15 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
                 goto err;
         }
     }
+
+    if (!enc && (expected->aead == EVP_CIPH_OCB_MODE || expected->tag_late)) {
+        if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+                                 expected->tag_len, expected->tag)) {
+            t->err = "TAG_SET_ERROR";
+            goto err;
+        }
+    }
+
     EVP_CIPHER_CTX_set_padding(ctx, 0);
     t->err = "CIPHERUPDATE_ERROR";
     tmplen = 0;
@@ -912,7 +945,7 @@ static int mac_test_parse(EVP_TEST *t,
     if (strcmp(keyword, "Algorithm") == 0) {
         mdata->alg = OPENSSL_strdup(value);
         if (!mdata->alg)
-            return 0;
+            return -1;
         return 1;
     }
     if (strcmp(keyword, "Input") == 0)
@@ -1259,9 +1292,9 @@ static int pderive_test_parse(EVP_TEST *t,
     if (strcmp(keyword, "PeerKey") == 0) {
         EVP_PKEY *peer;
         if (find_key(&peer, value, public_keys) == 0)
-            return 0;
+            return -1;
         if (EVP_PKEY_derive_set_peer(kdata->ctx, peer) <= 0)
-            return 0;
+            return -1;
         return 1;
     }
     if (strcmp(keyword, "SharedSecret") == 0)
@@ -2109,7 +2142,7 @@ static int digestsigver_test_parse(EVP_TEST *t,
     }
     if (strcmp(keyword, "Ctrl") == 0) {
         if (mdata->pctx == NULL)
-            return 0;
+            return -1;
         return pkey_test_ctrl(t, mdata->pctx, value);
     }
     return 0;

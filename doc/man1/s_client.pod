@@ -147,7 +147,7 @@ SSL servers.
 =head1 OPTIONS
 
 In addition to the options below the B<s_client> utility also supports the
-common and client only options documented in the
+common and client only options documented
 in the "Supported Command Line Commands" section of the L<SSL_CONF_cmd(3)>
 manual page.
 
@@ -201,7 +201,7 @@ Even though SNI should normally be a DNS name and not an IP address, if
 B<-servername> is provided then that name will be sent, regardless of whether 
 it is a DNS name or not.
 
-This option cannot be used in conjuction with B<-noservername>.
+This option cannot be used in conjunction with B<-noservername>.
 
 =item B<-noservername>
 
@@ -542,7 +542,7 @@ further information).
 
 =item B<-bugs>
 
-There are several known bug in SSL and TLS implementations. Adding this
+There are several known bugs in SSL and TLS implementations. Adding this
 option enables various workarounds.
 
 =item B<-comp>
