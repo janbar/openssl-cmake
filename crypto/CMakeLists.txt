@@ -39,6 +39,14 @@ file( WRITE ${CMAKE_CURRENT_BINARY_DIR}/opensslconf.h.cmake "${CONF}" )
 #~2DO: set BUILDINF_DATE to `date LC_ALL=C LC_TIME=C`
 configure_file ( buildinf.h.cmake buildinf.h )
 
+if ( APPLE )
+  set( DSO_EXTENSION ".dylib" )
+elseif ( WIN32 )
+  set( DSO_EXTENSION ".dll" )
+else()
+  set( DSO_EXTENSION ".so" )
+endif()
+
 configure_file( ${CMAKE_CURRENT_BINARY_DIR}/opensslconf.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/openssl/opensslconf.h )
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/bn_conf.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/internal/bn_conf.h )
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/dso_conf.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/internal/dso_conf.h )

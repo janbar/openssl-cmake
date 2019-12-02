@@ -100,14 +100,6 @@ set( VERSION_STRING ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH} )
 set( LIB_VERSION ${VERSION_MAJOR}.${VERSION_MINOR} )
 set( LIB_SOVERSION ${VERSION_MAJOR}.${VERSION_MINOR} )
 
-if ( APPLE )
-  set( DSO_EXTENSION ".dylib" )
-elseif ( WIN32 )
-  set( DSO_EXTENSION ".dll" )
-else()
-  set( DSO_EXTENSION ".so" )
-endif()
-
 include_directories ( BEFORE SYSTEM
     ${CMAKE_CURRENT_BINARY_DIR}/crypto
     ${CMAKE_CURRENT_BINARY_DIR}/ssl
