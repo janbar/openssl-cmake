@@ -14,9 +14,9 @@ SSL_get_error - obtain result code for TLS/SSL I/O operation
 
 SSL_get_error() returns a result code (suitable for the C "switch"
 statement) for a preceding call to SSL_connect(), SSL_accept(), SSL_do_handshake(),
-SSL_read_ex(), SSL_read(), SSL_peek_ex(), SSL_peek(), SSL_write_ex() or
-SSL_write() on B<ssl>.  The value returned by that TLS/SSL I/O function must be
-passed to SSL_get_error() in parameter B<ret>.
+SSL_read_ex(), SSL_read(), SSL_peek_ex(), SSL_peek(), SSL_shutdown(),
+SSL_write_ex() or SSL_write() on B<ssl>.  The value returned by that TLS/SSL I/O
+function must be passed to SSL_get_error() in parameter B<ret>.
 
 In addition to B<ssl> and B<ret>, SSL_get_error() inspects the
 current thread's OpenSSL error queue.  Thus, SSL_get_error() must be
@@ -166,7 +166,7 @@ The SSL_ERROR_WANT_CLIENT_HELLO_CB error code was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

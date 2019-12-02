@@ -193,7 +193,7 @@ for connections on a given port using SSL/TLS.
 =head1 OPTIONS
 
 In addition to the options below the B<s_server> utility also supports the
-common and server only options documented in the
+common and server only options documented
 in the "Supported Command Line Commands" section of the L<SSL_CONF_cmd(3)>
 manual page.
 
@@ -542,7 +542,7 @@ OpenSSL was built.
 
 =item B<-bugs>
 
-There are several known bug in SSL and TLS implementations. Adding this
+There are several known bugs in SSL and TLS implementations. Adding this
 option enables various workarounds.
 
 =item B<-no_comp>
