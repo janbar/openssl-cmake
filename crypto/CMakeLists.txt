@@ -26,7 +26,7 @@
 
 include( CMakeParseArguments )
 
-#~2DO: set BUILDINF_DATE to `date LC_ALL=C LC_TIME=C`
+string(TIMESTAMP BUILDINF_DATE "%Y-%m-%d %H:%M:%S UTC" UTC)
 configure_file( buildinf.h.cmake buildinf.h )
 
 include( CheckIncludeFile )
