@@ -45,7 +45,7 @@ function(from_hex HEX DEC)
   set( _res 0 )
   string( LENGTH "${HEX}" _strlen )
 
-  while ( _strlen GREATER 0 )
+  while( _strlen GREATER 0 )
     math( EXPR _res "${_res} * 16" )
     string( SUBSTRING "${HEX}" 0 1 NIBBLE )
     string( SUBSTRING "${HEX}" 1 -1 HEX )
@@ -100,16 +100,10 @@ set( VERSION_STRING ${OPENSSL_VERSION} )
 set( LIB_VERSION ${VERSION_MAJOR}.${VERSION_MINOR} )
 set( LIB_SOVERSION ${VERSION_MAJOR}.${VERSION_MINOR} )
 
-include_directories ( BEFORE SYSTEM
-    ${CMAKE_CURRENT_BINARY_DIR}/crypto
-    ${CMAKE_CURRENT_BINARY_DIR}/ssl
-    ${CMAKE_CURRENT_BINARY_DIR}/include
-    crypto . )
-
 add_definitions( -DOPENSSL_NO_ASM )
 add_definitions( -DOPENSSL_NO_STATIC_ENGINE )
 
-if ( MSVC )
+if( MSVC )
   include( MSVCRuntime )
   configure_msvc_runtime()
   add_definitions( "-DOPENSSLDIR=\"C:/ssl\"" )
@@ -119,7 +113,7 @@ else()
   add_definitions( "-DENGINESDIR=\"/usr/local/engines-1.1\"" )
 endif()
 
-if ( APPLE )
+if( APPLE )
   set( CMAKE_MACOSX_RPATH ON )
   add_definitions( -DOPENSSL_SYSNAME_MACOSX )
 endif()
@@ -134,7 +128,7 @@ if( WIN32 AND NOT CYGWIN )
   add_definitions( -DWIN32_LEAN_AND_MEAN )
   add_definitions( -D_CRT_SECURE_NO_WARNINGS )
 
-  if (BUILD_SHARED_LIBS)
+  if(BUILD_SHARED_LIBS)
     # avoid conflict: ocsp.h and wincrypt.h
     add_definitions( -D_WINDLL )
   endif()
@@ -148,17 +142,34 @@ include( CheckTypeSize )
 check_type_size( "long" LONG_INT )
 check_type_size( "long long" LONG_LONG_INT )
 check_type_size( "int" INT )
-if ( HAVE_LONG_INT AND (${LONG_INT} EQUAL 8) )
-  set ( SIXTY_FOUR_BIT_LONG ON )
-elseif ( HAVE_LONG_LONG_INT AND (${LONG_LONG_INT} EQUAL 8) )
-  set ( SIXTY_FOUR_BIT ON )
+if( HAVE_LONG_INT AND (${LONG_INT} EQUAL 8) )
+  set( SIXTY_FOUR_BIT_LONG ON )
+elseif( HAVE_LONG_LONG_INT AND (${LONG_LONG_INT} EQUAL 8) )
+  set( SIXTY_FOUR_BIT ON )
 else()
-  set ( THIRTY_TWO_BIT ON )
+  set( THIRTY_TWO_BIT ON )
 endif()
 
 if( MSVC OR ( WIN32 AND MINGW AND NOT CYGWIN ) )
   set( OPENSSL_EXPORT_VAR_AS_FUNCTION 1 )
 endif()
+
+# Begin configure public headers
+file( COPY ${PROJECT_SOURCE_DIR}/include/internal DESTINATION include )
+file( COPY ${PROJECT_SOURCE_DIR}/include/openssl DESTINATION include )
+
+file( READ ${PROJECT_SOURCE_DIR}/opensslconf.h.cmake CONF )
+set( CONF "
+#define OPENSSL_NO_MD2
+#define OPENSSL_NO_RC5
+#define OPENSSL_NO_RFC3779
+#define OPENSSL_NO_EC_NISTP_64_GCC_128
+${CONF}" )
+file( WRITE ${PROJECT_BINARY_DIR}/opensslconf.h.cmake "${CONF}" )
+
+configure_file( ${PROJECT_BINARY_DIR}/opensslconf.h.cmake
+  ${PROJECT_BINARY_DIR}/include/openssl/opensslconf.h )
+# End configure public headers
 
 add_subdirectory(crypto)
 add_subdirectory(ssl)
@@ -167,18 +178,13 @@ if(WITH_APPS AND NOT ANDROID AND NOT IOS)
   add_subdirectory(apps)
 endif()
 
-file( COPY ${PROJECT_SOURCE_DIR}/include/internal DESTINATION include )
-file( COPY ${PROJECT_SOURCE_DIR}/include/openssl DESTINATION include )
-
-configure_file( ${PROJECT_SOURCE_DIR}/opensslconf.h.cmake
-  ${PROJECT_BINARY_DIR}/include/openssl/opensslconf.h )
-
 file( READ ${PROJECT_SOURCE_DIR}/c_rehash.cmake C_REHASH )
 string( REPLACE "@OPENSSLDIR@" "${OPENSSLDIR}" C_REHASH "${C_REHASH}" )
 string( REPLACE "@CMAKE_INSTALL_PREFIX@" "${CMAKE_INSTALL_PREFIX}" C_REHASH "${C_REHASH}" )
 file( WRITE ${PROJECT_BINARY_DIR}/c_rehash "${C_REHASH}" )
 
-install( DIRECTORY ${PROJECT_BINARY_DIR}/include/openssl DESTINATION include )
+file( GLOB PUBLIC_HEADERS "${PROJECT_BINARY_DIR}/include/openssl/*.h" )
+install( FILES ${PUBLIC_HEADERS} DESTINATION include/openssl )
 
 install( FILES
   ${PROJECT_BINARY_DIR}/c_rehash

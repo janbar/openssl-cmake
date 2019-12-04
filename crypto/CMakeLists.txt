@@ -26,18 +26,8 @@
 
 include( CMakeParseArguments )
 
-file( READ ${PROJECT_SOURCE_DIR}/opensslconf.h.cmake CONF )
-
-set( CONF "
-#define OPENSSL_NO_MD2
-#define OPENSSL_NO_RC5
-#define OPENSSL_NO_RFC3779
-#define OPENSSL_NO_EC_NISTP_64_GCC_128
-${CONF}" )
-file( WRITE ${CMAKE_CURRENT_BINARY_DIR}/opensslconf.h.cmake "${CONF}" )
-
 #~2DO: set BUILDINF_DATE to `date LC_ALL=C LC_TIME=C`
-configure_file ( buildinf.h.cmake buildinf.h )
+configure_file( buildinf.h.cmake buildinf.h )
 
 include( CheckIncludeFile )
 CHECK_INCLUDE_FILE( fcntl.h CHK_DLFCN )
@@ -45,13 +35,13 @@ if( CHK_DLFCN )
   set( HAVE_DLFCN_H ON )
 endif()
 
-if ( APPLE )
+if( APPLE )
   set( DSO_DLFCN ON )
   set( DSO_EXTENSION ".dylib" )
-elseif ( WIN32 AND NOT CYGWIN )
+elseif( WIN32 AND NOT CYGWIN )
   set( DSO_WIN32 ON )
   set( DSO_EXTENSION ".dll" )
-elseif ( CYGWIN )
+elseif( CYGWIN )
   set( DSO_DLFCN ON )
   set( DSO_EXTENSION ".dll" )
 else()
@@ -63,15 +53,24 @@ else()
   set( DSO_EXTENSION ".so" )
 endif()
 
-configure_file( ${CMAKE_CURRENT_BINARY_DIR}/opensslconf.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/openssl/opensslconf.h )
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/bn_conf.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/internal/bn_conf.h )
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/dso_conf.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/internal/dso_conf.h )
+file( COPY ${CMAKE_CURRENT_SOURCE_DIR}/include/internal DESTINATION include )
+
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/bn_conf.h.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/include/internal/bn_conf.h )
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/dso_conf.h.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/include/internal/dso_conf.h )
 
 set( LIBSRC
   cpt_err.c cryptlib.c ctype.c cversion.c ebcdic.c ex_data.c init.c mem.c mem_clr.c mem_dbg.c mem_sec.c o_dir.c o_fips.c
   o_fopen.c o_init.c o_str.c o_time.c uid.c getenv.c )
 
-include_directories( BEFORE SYSTEM include modes ec/curve448 ec/curve448/arch_32 )
+include_directories( BEFORE SYSTEM
+  modes ec/curve448 ec/curve448/arch_32
+  ${CMAKE_CURRENT_BINARY_DIR}/include # internal
+  ${CMAKE_CURRENT_BINARY_DIR}/ # buildconf.h
+  ${PROJECT_SOURCE_DIR}/ # e_os.h
+  ${PROJECT_BINARY_DIR}/include # public
+)
 
 if( BUILD_SHARED_LIBS )
   add_definitions( -DOPENSSL_BUILD_SHLIBCRYPTO )
@@ -285,13 +284,15 @@ endif()
 
 add_library( crypto ${LIBSRC} ${OBJECTS_SRC} )
 
+target_include_directories( crypto PUBLIC ${PROJECT_BINARY_DIR}/include )
+
 if( WIN32 AND NOT CYGWIN )
   target_link_libraries( crypto ws2_32 crypt32 )
 else()
   if( Threads_FOUND )
     target_link_libraries( crypto ${CMAKE_THREAD_LIBS_INIT} )
   endif()
-  if ( DSO_DLFCN AND HAVE_DLFCN_H )
+  if( DSO_DLFCN AND HAVE_DLFCN_H )
     target_link_libraries( crypto dl )
   endif()
 endif()

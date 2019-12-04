@@ -33,11 +33,9 @@ file( WRITE ${CMAKE_CURRENT_BINARY_DIR}/tsget "${TSGET}" )
 file( READ ${CMAKE_CURRENT_SOURCE_DIR}/progs.h.cmake PROGS_H )
 file( WRITE ${CMAKE_CURRENT_BINARY_DIR}/progs.h "${PROGS_H}" )
 
-include_directories( BEFORE SYSTEM ${CMAKE_CURRENT_BINARY_DIR} )
+add_definitions( -DMONOLITH )
 
-add_definitions ( -DMONOLITH )
-
-set ( E_SRC
+set( E_SRC
   app_rand.c apps.c asn1pars.c bf_prefix.c ca.c ciphers.c cms.c crl.c crl2p7.c dgst.c dhparam.c
   dsa.c dsaparam.c ec.c ecparam.c enc.c engine.c errstr.c gendsa.c genpkey.c
   genrsa.c nseq.c ocsp.c openssl.c opt.c passwd.c pkcs12.c pkcs7.c pkcs8.c pkey.c
@@ -45,14 +43,18 @@ set ( E_SRC
   s_client.c s_server.c s_socket.c s_time.c sess_id.c smime.c speed.c spkac.c storeutl.c srp.c
   ts.c verify.c version.c x509.c )
 
-if ( WIN32 )
-  if ( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/win32_init.c" )
-    list( APPEND E_SRC win32_init.c )
-  endif()
+include_directories( BEFORE SYSTEM
+  ${PROJECT_SOURCE_DIR}/ # e_os.h
+  ${CMAKE_CURRENT_BINARY_DIR}/ # progs.h
+)
+
+if( WIN32 )
+  list( APPEND E_SRC win32_init.c )
 endif()
 
-add_executable ( openssl ${E_SRC} )
-target_link_libraries ( openssl crypto ssl )
+add_executable( openssl ${E_SRC} )
+
+target_link_libraries( openssl crypto ssl )
 
 install( TARGETS openssl
     RUNTIME DESTINATION bin )
