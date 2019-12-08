@@ -23,14 +23,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-
+set( CMAKE_LEGACY_CYGWIN_WIN32 0 )
 project( openssl )
-cmake_minimum_required( VERSION 2.8.3 )
+cmake_minimum_required( VERSION 2.8.11 )
 
-set(CMAKE_DISABLE_SOURCE_CHANGES ON)
-set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
-set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
-option(WITH_APPS "Build applications" OFF)
+set( CMAKE_DISABLE_SOURCE_CHANGES ON )
+set( CMAKE_DISABLE_IN_SOURCE_BUILD ON )
+
+set( CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" )
+
+option( WITH_APPS "Build applications" OFF )
 
 set( VERSION_MAJOR 1  )
 set( VERSION_MINOR 0  )
@@ -47,16 +49,19 @@ include_directories ( BEFORE SYSTEM
     crypto . )
 
 add_definitions( -DOPENSSL_NO_ASM )
+add_definitions( -DOPENSSL_NO_STATIC_ENGINE )
 
-if(MSVC)
-  include(MSVCRuntime)
+if( MSVC )
+  include( MSVCRuntime )
   configure_msvc_runtime()
+  set( OPENSSLDIR "C:/ssl" )
+  set( ENGINESDIR "C:/engines-1.0" )
+else()
+  set( OPENSSLDIR "/usr/local/ssl" )
+  set( ENGINESDIR "/usr/local/engines-1.0" )
 endif()
-
-if(WIN32)
-  set(CMAKE_SHARED_LIBRARY_PREFIX "lib")
-  set(CMAKE_STATIC_LIBRARY_PREFIX "lib")
-endif()
+add_definitions( "-DOPENSSLDIR=\"${OPENSSLDIR}\"" )
+add_definitions( "-DENGINESDIR=\"${ENGINESDIR}\"" )
 
 if ( APPLE )
   set( CMAKE_MACOSX_RPATH ON )
@@ -68,7 +73,7 @@ if( WIN32 AND NOT CYGWIN )
   add_definitions( -DWIN32_LEAN_AND_MEAN )
   add_definitions( -D_CRT_SECURE_NO_WARNINGS )
 
-  if (BUILD_SHARED_LIBS)
+  if(BUILD_SHARED_LIBS)
     # avoid conflict: ocsp.h and wincrypt.h
     add_definitions( -D_WINDLL )
   endif()
@@ -78,35 +83,74 @@ if( MINGW )
   set( CMAKE_SHARED_LINKER_FLAGS "-Wl,--export-all" )
 endif()
 
-if ( ANDROID )
-  set ( BUILD_SHARED_LIBS ON )
-elseif ( IOS )
-  set ( BUILD_SHARED_LIBS OFF )
+include( CheckTypeSize )
+check_type_size( "long" LONG_INT )
+check_type_size( "long long" LONG_LONG_INT )
+check_type_size( "int" INT )
+if( HAVE_LONG_INT AND (${LONG_INT} EQUAL 8) )
+  set( SIXTY_FOUR_BIT_LONG ON )
+elseif( HAVE_LONG_LONG_INT AND (${LONG_LONG_INT} EQUAL 8) )
+  set( SIXTY_FOUR_BIT ON )
+else()
+  set( THIRTY_TWO_BIT ON )
 endif()
+
+if( MSVC OR ( WIN32 AND MINGW AND NOT CYGWIN ) )
+  set( OPENSSL_EXPORT_VAR_AS_FUNCTION 1 )
+endif()
+
+# Begin configure public headers
+file( READ ${PROJECT_SOURCE_DIR}/opensslconf.h.cmake CONF )
+set( CONF "
+#define OPENSSL_NO_GMP
+#define OPENSSL_NO_JPAKE
+#define OPENSSL_NO_KRB5
+#define OPENSSL_NO_MD2
+#define OPENSSL_NO_RC5
+#define OPENSSL_NO_RFC3779
+#define OPENSSL_NO_STORE
+#define OPENSSL_NO_DYNAMIC_ENGINE
+#define OPENSSL_NO_SCTP
+#define OPENSSL_NO_EC_NISTP_64_GCC_128
+${CONF}" )
+file( WRITE ${PROJECT_BINARY_DIR}/opensslconf.h.cmake "${CONF}" )
+
+configure_file( ${PROJECT_BINARY_DIR}/opensslconf.h.cmake
+  ${PROJECT_BINARY_DIR}/include/openssl/opensslconf.h )
+# End configure public headers
 
 add_subdirectory( crypto )
 add_subdirectory( ssl )
 
-if( WITH_APPS AND NOT ANDROID AND NOT IOS )
-  add_subdirectory( apps )
+if(WITH_APPS AND NOT ANDROID AND NOT IOS)
+  add_subdirectory(apps)
 endif()
 
 file ( COPY e_os2.h DESTINATION ${PROJECT_BINARY_DIR}/include/openssl )
 
-install( DIRECTORY ${PROJECT_BINARY_DIR}/include/openssl DESTINATION include )
+file( READ ${PROJECT_SOURCE_DIR}/c_rehash.cmake C_REHASH )
+string( REPLACE "%OPENSSLDIR%" "${OPENSSLDIR}" C_REHASH "${C_REHASH}" )
+string( REPLACE "%CMAKE_INSTALL_PREFIX%" "${CMAKE_INSTALL_PREFIX}" C_REHASH "${C_REHASH}" )
+file( WRITE ${PROJECT_BINARY_DIR}/c_rehash "${C_REHASH}" )
 
-#install( FILES tools/c_hash tools/c_info tools/c_issuer tools/c_name tools/#c_rehash
-#    FAQ LICENSE PROBLEMS README README.ASN1 README.ENGINE
-#    DESTINATION share/openssl )
+file( GLOB PUBLIC_HEADERS "${PROJECT_BINARY_DIR}/include/openssl/*.h" )
+install( FILES ${PUBLIC_HEADERS} DESTINATION include/openssl )
+
+install( FILES
+  ${PROJECT_BINARY_DIR}/c_rehash
+  FAQ LICENSE README README.ENGINE
+  DESTINATION share/openssl )
+install( DIRECTORY ${PROJECT_BINARY_DIR}/include/openssl DESTINATION include )
 
 install( DIRECTORY doc DESTINATION share )
 
 # Generate the package target
 set( CPACK_GENERATOR ZIP TGZ )
-set( CPACK_PACKAGE_NAME "openssl-cmake" )
+set( CPACK_PACKAGE_NAME "${CMAKE_PROJECT_NAME}" )
 set( CPACK_PACKAGE_VERSION_MAJOR ${VERSION_MAJOR} )
 set( CPACK_PACKAGE_VERSION_MINOR ${VERSION_MINOR} )
 set( CPACK_PACKAGE_VERSION_PATCH ${VERSION_PATCH} )
+set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${VERSION_STRING}" )
 
 include( CPack )
 

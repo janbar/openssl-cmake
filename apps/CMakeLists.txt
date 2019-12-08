@@ -23,8 +23,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+file( READ ${CMAKE_CURRENT_SOURCE_DIR}/CA.pl.cmake CA_PL )
+file( WRITE ${CMAKE_CURRENT_BINARY_DIR}/CA.pl "${CA_PL}" )
 
-include_directories ( .. ../include )
+file( READ ${CMAKE_CURRENT_SOURCE_DIR}/tsget.cmake TSGET )
+file( WRITE ${CMAKE_CURRENT_BINARY_DIR}/tsget "${TSGET}" )
+
+file( READ ${CMAKE_CURRENT_SOURCE_DIR}/progs.h.cmake PROGS_H )
+file( WRITE ${CMAKE_CURRENT_BINARY_DIR}/progs.h "${PROGS_H}" )
+
 add_definitions ( -DMONOLITH )
 
 set ( E_SRC openssl.c #
@@ -35,6 +42,11 @@ set ( E_SRC openssl.c #
   pkeyparam.c pkeyutl.c spkac.c smime.c cms.c rand.c engine.c ocsp.c prime.c ts.c
   srp.c )
 
+include_directories( BEFORE SYSTEM
+  ${PROJECT_SOURCE_DIR}/ # e_os.h
+  ${CMAKE_CURRENT_BINARY_DIR}/ # progs.h
+)
+
 if ( WIN32 )
   if ( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/winrand.c" )
     list( APPEND E_SRC winrand.c )
@@ -42,9 +54,17 @@ if ( WIN32 )
 endif()
 
 add_executable ( openssl ${E_SRC} )
+
 target_link_libraries ( openssl crypto ssl )
 
 install( TARGETS openssl
     RUNTIME DESTINATION bin )
 
-install( FILES CA.sh CA.pl tsget DESTINATION share/openssl )
+install( FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/openssl.cnf
+  DESTINATION "${OPENSSLDIR}" )
+
+install( FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/CA.pl
+  ${CMAKE_CURRENT_BINARY_DIR}/tsget
+  DESTINATION share/openssl )
