@@ -33,6 +33,7 @@ include( CheckIncludeFile )
 CHECK_INCLUDE_FILE( fcntl.h CHK_DLFCN )
 if( CHK_DLFCN )
   set( HAVE_DLFCN_H ON )
+  add_definitions( -DHAVE_DLFCN_H )
 endif()
 
 if( APPLE )
