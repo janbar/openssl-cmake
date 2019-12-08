@@ -201,7 +201,7 @@ int main(int argc, char **argv)
     if (!test_x509_cmp_time_current())
         ret = 1;
 
-    for (idx=0 ; idx < OSSL_NELEM(x509_cmp_tests) ; ++idx) {
+    for (idx=0 ; idx < sizeof(x509_cmp_tests)/sizeof(x509_cmp_tests[0]) ; ++idx) {
         if (!test_x509_cmp_time(idx))
             ret = 1;
     }
