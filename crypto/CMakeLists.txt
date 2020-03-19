@@ -23,7 +23,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-
 include( CMakeParseArguments )
 
 string(TIMESTAMP BUILDINF_DATE "%Y-%m-%d %H:%M:%S UTC" UTC)
@@ -53,12 +52,10 @@ else()
   set( DSO_EXTENSION ".so" )
 endif()
 
-file( COPY ${CMAKE_CURRENT_SOURCE_DIR}/include/internal DESTINATION include )
-
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/bn_conf.h.cmake
-  ${CMAKE_CURRENT_BINARY_DIR}/include/internal/bn_conf.h )
+  ${PROJECT_BINARY_DIR}/include/crypto/bn_conf.h )
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/dso_conf.h.cmake
-  ${CMAKE_CURRENT_BINARY_DIR}/include/internal/dso_conf.h )
+  ${PROJECT_BINARY_DIR}/include/crypto/dso_conf.h )
 
 set( LIBSRC
   cpt_err.c cryptlib.c ctype.c cversion.c ebcdic.c ex_data.c init.c mem.c mem_clr.c mem_dbg.c mem_sec.c o_dir.c o_fips.c
@@ -66,10 +63,9 @@ set( LIBSRC
 
 include_directories( BEFORE SYSTEM
   modes ec/curve448 ec/curve448/arch_32
-  ${CMAKE_CURRENT_BINARY_DIR}/include # internal
-  ${CMAKE_CURRENT_BINARY_DIR}/ # buildconf.h
+  ${CMAKE_CURRENT_BINARY_DIR}/ # buildinf.h
+  ${PROJECT_BINARY_DIR}/include # public|crypto|internal
   ${PROJECT_SOURCE_DIR}/ # e_os.h
-  ${PROJECT_BINARY_DIR}/include # public
 )
 
 if( BUILD_SHARED_LIBS )
@@ -236,7 +232,7 @@ add_submodule ( rsa rsa_ameth.c rsa_asn1.c rsa_chk.c rsa_crpt.c rsa_depr.c rsa_e
 add_submodule ( seed seed.c seed_cbc.c seed_cfb.c seed_ecb.c seed_ofb.c )
 
 add_submodule ( sha keccak1600.c sha1_one.c sha1dgst.c sha256.c sha512.c )
- 
+
 add_submodule ( siphash siphash.c siphash_ameth.c siphash_pmeth.c )
 
 add_submodule ( sm2 sm2_crypt.c sm2_err.c sm2_pmeth.c sm2_sign.c )

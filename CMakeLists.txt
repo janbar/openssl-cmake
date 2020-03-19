@@ -158,6 +158,7 @@ endif()
 
 # Begin configure public headers
 file( COPY ${PROJECT_SOURCE_DIR}/include/internal DESTINATION include )
+file( COPY ${PROJECT_SOURCE_DIR}/include/crypto DESTINATION include )
 file( COPY ${PROJECT_SOURCE_DIR}/include/openssl DESTINATION include )
 
 file( READ ${PROJECT_SOURCE_DIR}/opensslconf.h.cmake CONF )
