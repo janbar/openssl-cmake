@@ -65,7 +65,7 @@ if( MSVC )
 endif()
 
 if (OPENSSL_BUILD_WITH_INSTALL_NAMES)
-   set_target_properties( crypto PROPERTIES OUTPUT_NAME "ssl" )
+   set_target_properties( ssl PROPERTIES OUTPUT_NAME "ssl" )
 endif()
 
 install( TARGETS ssl
