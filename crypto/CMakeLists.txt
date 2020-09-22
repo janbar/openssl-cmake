@@ -308,6 +308,11 @@ if( MSVC )
   endif()
 endif()
 
+
+if (OPENSSL_BUILD_WITH_INSTALL_NAMES)
+   set_target_properties( crypto PROPERTIES OUTPUT_NAME "crypto" )
+endif()
+
 install( TARGETS crypto
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
