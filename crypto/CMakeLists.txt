@@ -297,18 +297,53 @@ set_target_properties( crypto PROPERTIES
   VERSION "${LIB_VERSION}" SOVERSION "${LIB_SOVERSION}" )
 
 if( ANDROID )
-  set_target_properties( crypto PROPERTIES OUTPUT_NAME "crypto_1_1" )
+  set( OPENSSL_LIBRARY_NAME  "crypto_1_1" )
+  set_target_properties( crypto PROPERTIES OUTPUT_NAME ${OPENSSL_LIBRARY_NAME} )
 endif()
 
 if( MSVC )
   if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-    set_target_properties( crypto PROPERTIES OUTPUT_NAME "crypto-1_1-x64" )
+    set( OPENSSL_LIBRARY_NAME "crypto-1_1-x64" )
   elseif( CMAKE_SIZEOF_VOID_P EQUAL 4 )
-    set_target_properties( crypto PROPERTIES OUTPUT_NAME "crypto-1_1" )
+    set( OPENSSL_LIBRARY_NAME "crypto-1_1" )
   endif()
+  set_target_properties( crypto PROPERTIES OUTPUT_NAME ${OPENSSL_LIBRARY_NAME} )
+  set_target_properties( crypto
+    PROPERTIES
+    COMPILE_PDB_NAME_DEBUG ${OPENSSL_LIBRARY_NAME}${CMAKE_DEBUG_POSTFIX}
+    COMPILE_PDB_NAME_RELEASE ${OPENSSL_LIBRARY_NAME}
+    COMPILE_PDB_NAME_MINSIZEREL ${OPENSSL_LIBRARY_NAME}
+    COMPILE_PDB_NAME_RELWITHDEBINFO ${OPENSSL_LIBRARY_NAME} )
+  if( OPENSSL_BINARYDIR_POSTFIX )
+    set( OPENSSL_BINARY_DIR  "bin/${OPENSSL_BINARYDIR_POSTFIX}" )
+  else()
+    set( OPENSSL_BINARY_DIR  "bin" )
+  endif()
+  if( OPENSSL_LIBRARYDIR_POSTFIX )
+    set( OPENSSL_LIBRARY_DIR "lib/${OPENSSL_LIBRARYDIR_POSTFIX}" )
+    set( OPENSSL_ARCHIVE_DIR "lib/${OPENSSL_LIBRARYDIR_POSTFIX}" )
+  else()
+    set( OPENSSL_LIBRARY_DIR "lib" )
+    set( OPENSSL_ARCHIVE_DIR "lib" )
+  endif()
+else()
+  set( OPENSSL_BINARY_DIR  "bin" )
+  set( OPENSSL_LIBRARY_DIR "lib" )
+  set( OPENSSL_ARCHIVE_DIR "lib" )
 endif()
 
 install( TARGETS crypto
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib )
+    RUNTIME DESTINATION ${OPENSSL_BINARY_DIR}
+    LIBRARY DESTINATION ${OPENSSL_LIBRARY_DIR}
+    ARCHIVE DESTINATION ${OPENSSL_ARCHIVE_DIR} )
+
+if( MSVC )
+  if ( BUILD_SHARED_LIBS )
+    install(FILES $<TARGET_PDB_FILE:crypto>
+        DESTINATION ${OPENSSL_BINARY_DIR} OPTIONAL)
+  else()
+    install( DIRECTORY $<TARGET_FILE_DIR:crypto>/
+        DESTINATION ${OPENSSL_LIBRARY_DIR}
+        FILES_MATCHING PATTERN "*.pdb" )
+  endif()
+endif()
