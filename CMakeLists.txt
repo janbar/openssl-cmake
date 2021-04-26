@@ -109,8 +109,8 @@ if( MSVC )
   set( OPENSSLDIR "C:/ssl" )
   set( ENGINESDIR "C:/engines-1.1" )
 else()
-  set( OPENSSLDIR "/usr/local/ssl" )
-  set( ENGINESDIR "/usr/local/engines-1.1" )
+  set( OPENSSLDIR "${CMAKE_INSTALL_PREFIX}/ssl" )
+  set( ENGINESDIR "${CMAKE_INSTALL_PREFIX}/engines-1.1" )
 endif()
 add_definitions( "-DOPENSSLDIR=\"${OPENSSLDIR}\"" )
 add_definitions( "-DENGINESDIR=\"${ENGINESDIR}\"" )
@@ -177,24 +177,42 @@ configure_file( ${PROJECT_BINARY_DIR}/opensslconf.h.cmake
 add_subdirectory(crypto)
 add_subdirectory(ssl)
 
-if(WITH_APPS AND NOT ANDROID AND NOT IOS)
+if( WITH_APPS AND NOT ANDROID AND NOT IOS )
   add_subdirectory(apps)
-endif()
 
-file( READ ${PROJECT_SOURCE_DIR}/c_rehash.cmake C_REHASH )
-string( REPLACE "@OPENSSLDIR@" "${OPENSSLDIR}" C_REHASH "${C_REHASH}" )
-string( REPLACE "@CMAKE_INSTALL_PREFIX@" "${CMAKE_INSTALL_PREFIX}" C_REHASH "${C_REHASH}" )
-file( WRITE ${PROJECT_BINARY_DIR}/c_rehash "${C_REHASH}" )
+  file( READ ${PROJECT_SOURCE_DIR}/c_rehash.cmake C_REHASH )
+  string( REPLACE "@OPENSSLDIR@" "${OPENSSLDIR}" C_REHASH "${C_REHASH}" )
+  string( REPLACE "@CMAKE_INSTALL_PREFIX@" "${CMAKE_INSTALL_PREFIX}" C_REHASH "${C_REHASH}" )
+  file( WRITE ${PROJECT_BINARY_DIR}/c_rehash "${C_REHASH}" )
+
+  install( FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/apps/openssl.cnf
+    ${CMAKE_CURRENT_SOURCE_DIR}/apps/ct_log_list.cnf
+    DESTINATION ssl )
+  install( CODE "FILE(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/ssl/certs)" )
+  install( CODE "FILE(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/ssl/misc)" )
+  install( CODE "FILE(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/ssl/private)" )
+  install( FILES ${PROJECT_BINARY_DIR}/c_rehash DESTINATION bin )
+endif()
 
 file( GLOB PUBLIC_HEADERS "${PROJECT_BINARY_DIR}/include/openssl/*.h" )
 install( FILES ${PUBLIC_HEADERS} DESTINATION include/openssl )
 
 install( FILES
-  ${PROJECT_BINARY_DIR}/c_rehash
   FAQ LICENSE README README.ENGINE
   DESTINATION share/openssl )
 
 install( DIRECTORY doc DESTINATION share )
+
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake IMMEDIATE @ONLY
+)
+
+add_custom_target(
+  "uninstall"
+  ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake
+)
 
 # Generate the package target
 set( CPACK_GENERATOR ZIP TGZ )
