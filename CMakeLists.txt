@@ -30,6 +30,7 @@ cmake_minimum_required( VERSION 3.1.0 )
 
 set( CMAKE_DISABLE_SOURCE_CHANGES ON )
 set( CMAKE_DISABLE_IN_SOURCE_BUILD ON )
+option( OPENSSL_BUILD_WITH_INSTALL_NAMES "Build libraries with unadorned names" OFF )
 
 set( CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" )
 

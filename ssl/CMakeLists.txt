@@ -64,6 +64,10 @@ if( MSVC )
   endif()
 endif()
 
+if (OPENSSL_BUILD_WITH_INSTALL_NAMES)
+   set_target_properties( ssl PROPERTIES OUTPUT_NAME "ssl" )
+endif()
+
 install( TARGETS ssl
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
