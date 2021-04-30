@@ -209,10 +209,12 @@ configure_file(
   ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake IMMEDIATE @ONLY
 )
 
-add_custom_target(
-  "uninstall"
-  ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake
-)
+if( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} )
+  add_custom_target(
+    "uninstall"
+    ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake
+  )
+endif()
 
 # Generate the package target
 set( CPACK_GENERATOR ZIP TGZ )
