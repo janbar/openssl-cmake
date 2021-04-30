@@ -283,7 +283,7 @@ add_library( crypto ${LIBSRC} ${OBJECTS_SRC} )
 target_include_directories( crypto PUBLIC ${PROJECT_BINARY_DIR}/include )
 
 if( WIN32 AND NOT CYGWIN )
-  target_link_libraries( crypto ws2_32 crypt32 )
+  target_link_libraries( crypto ws2_32 crypt32 user32 advapi32 )
 else()
   if( Threads_FOUND )
     target_link_libraries( crypto ${CMAKE_THREAD_LIBS_INIT} )
