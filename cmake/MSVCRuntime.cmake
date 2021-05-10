@@ -15,6 +15,7 @@ macro(configure_msvc_runtime)
 
 		if(BUILD_SHARED_LIBS)
 			set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+			set(MSVC_DYNAMIC_RUNTIME ON)
 		else()
 			if(NOT MSVC_DYNAMIC_RUNTIME)
 				message(STATUS "MSVC: using statically-linked runtime (/MT and /MTd).")

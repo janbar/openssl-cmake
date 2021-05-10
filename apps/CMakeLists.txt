@@ -50,14 +50,32 @@ include_directories( BEFORE SYSTEM
 
 if( WIN32 )
   list( APPEND E_SRC win32_init.c )
+  if( OPENSSL_BINARYDIR_POSTFIX )
+    set( OPENSSL_BINARY_DIR  "bin/${OPENSSL_BINARYDIR_POSTFIX}" )
+  else()
+    set( OPENSSL_BINARY_DIR  "bin" )
+  endif()
+  if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+    set( OPENSSL_BINARY_NAME "openssl-x64" )
+  elseif( CMAKE_SIZEOF_VOID_P EQUAL 4 )
+    set( OPENSSL_BINARY_NAME "openssl" )
+  endif()
+else()
+  set( OPENSSL_BINARY_DIR  "bin" )
+  set( OPENSSL_BINARY_NAME "openssl" )
 endif()
 
-add_executable( openssl ${E_SRC} )
+add_executable( ${OPENSSL_BINARY_NAME} ${E_SRC} )
+if( WIN32 )
+  set_target_properties(${OPENSSL_BINARY_NAME} PROPERTIES DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX})
+endif()
 
-target_link_libraries( openssl crypto ssl )
+target_link_libraries( ${OPENSSL_BINARY_NAME} crypto ssl )
 
-install( TARGETS openssl
-    RUNTIME DESTINATION bin )
+install( TARGETS ${OPENSSL_BINARY_NAME}
+    RUNTIME DESTINATION ${OPENSSL_BINARY_DIR} )
+install( FILES $<TARGET_PDB_FILE:${OPENSSL_BINARY_NAME}>
+    DESTINATION ${OPENSSL_BINARY_DIR} OPTIONAL )
 
 install( FILES
   ${CMAKE_CURRENT_BINARY_DIR}/CA.pl
