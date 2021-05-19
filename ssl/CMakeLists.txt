@@ -56,15 +56,18 @@ if( ANDROID )
   set_target_properties( ssl PROPERTIES OUTPUT_NAME "ssl_1_1" )
 elseif( MSVC )
   if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-    set_target_properties( ssl PROPERTIES OUTPUT_NAME "ssl-1_1-x64" )
+    set_target_properties( ssl PROPERTIES RUNTIME_OUTPUT_NAME "ssl-1_1-x64" )
+    set_target_properties( ssl PROPERTIES ARCHIVE_OUTPUT_NAME "libssl64MD" )
   elseif( CMAKE_SIZEOF_VOID_P EQUAL 4 )
-    set_target_properties( ssl PROPERTIES OUTPUT_NAME "ssl-1_1" )
+    set_target_properties( ssl PROPERTIES RUNTIME_OUTPUT_NAME "ssl-1_1" )
+    set_target_properties( ssl PROPERTIES ARCHIVE_OUTPUT_NAME "libssl32MD" )
   endif()
 else()
   set_target_properties( ssl PROPERTIES OUTPUT_NAME "ssl" )
 endif()
 
 install( TARGETS ssl
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib )
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION ${OPENSSL_LIB_INSTALL_DIR}
+  ARCHIVE DESTINATION ${OPENSSL_AR_INSTALL_DIR}
+)

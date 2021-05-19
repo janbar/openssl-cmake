@@ -173,6 +173,13 @@ configure_file( ${PROJECT_BINARY_DIR}/opensslconf.h.cmake
   ${PROJECT_BINARY_DIR}/include/openssl/opensslconf.h )
 # End configure public headers
 
+set(OPENSSL_LIB_INSTALL_DIR lib)
+set(OPENSSL_AR_INSTALL_DIR lib)
+if (MSVC)
+  set(OPENSSL_LIB_INSTALL_DIR lib/VC)
+  set(OPENSSL_AR_INSTALL_DIR lib/VC)
+endif()
+
 add_subdirectory(crypto)
 add_subdirectory(ssl)
 
@@ -191,7 +198,11 @@ if( WITH_APPS AND NOT ANDROID AND NOT IOS )
   install( CODE "FILE(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/ssl/certs)" )
   install( CODE "FILE(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/ssl/misc)" )
   install( CODE "FILE(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/ssl/private)" )
-  install( FILES ${PROJECT_BINARY_DIR}/c_rehash DESTINATION bin )
+  if( WIN32 )
+    install( FILES ${PROJECT_BINARY_DIR}/c_rehash DESTINATION bin RENAME c_rehash.pl)
+  else()
+    install( FILES ${PROJECT_BINARY_DIR}/c_rehash DESTINATION bin)
+  endif()
 endif()
 
 file( GLOB PUBLIC_HEADERS "${PROJECT_BINARY_DIR}/include/openssl/*.h" )
