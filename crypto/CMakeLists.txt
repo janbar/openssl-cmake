@@ -302,13 +302,16 @@ endif()
 
 if( MSVC )
   if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-    set_target_properties( crypto PROPERTIES OUTPUT_NAME "crypto-1_1-x64" )
+    set_target_properties( crypto PROPERTIES RUNTIME_OUTPUT_NAME "crypto-1_1-x64" )
+    set_target_properties( crypto PROPERTIES ARCHIVE_OUTPUT_NAME "libcrypto64MD" )
   elseif( CMAKE_SIZEOF_VOID_P EQUAL 4 )
-    set_target_properties( crypto PROPERTIES OUTPUT_NAME "crypto-1_1" )
+    set_target_properties( crypto PROPERTIES RUNTIME_OUTPUT_NAME "crypto-1_1" )
+    set_target_properties( crypto PROPERTIES ARCHIVE_OUTPUT_NAME "libcrypto32MD" )
   endif()
 endif()
 
 install( TARGETS crypto
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib )
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION ${OPENSSL_LIB_INSTALL_DIR}
+  ARCHIVE DESTINATION ${OPENSSL_AR_INSTALL_DIR}
+)
