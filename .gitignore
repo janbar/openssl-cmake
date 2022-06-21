@@ -13,6 +13,7 @@
 /out.*
 /tmp.*
 /configdata.pm
+/CMakeFiles/*
 
 # *all* Makefiles
 Makefile
