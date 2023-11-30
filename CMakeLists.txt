@@ -140,9 +140,17 @@ install( FILES
   ${PROJECT_BINARY_DIR}/c_rehash
   FAQ LICENSE README README.ENGINE
   DESTINATION share/openssl )
-install( DIRECTORY ${PROJECT_BINARY_DIR}/include/openssl DESTINATION include )
 
 install( DIRECTORY doc DESTINATION share )
+
+set( prefix      "${CMAKE_INSTALL_PREFIX}" )
+set( includedir  "include" )
+set( libdir      "lib" )
+get_target_property( libcrypto crypto OUTPUT_NAME )
+get_target_property( libssl ssl OUTPUT_NAME )
+configure_file(openssl.pc.in.cmake openssl.pc @ONLY)
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/openssl.pc
+  DESTINATION lib/pkgconfig)
 
 # Generate the package target
 set( CPACK_GENERATOR ZIP TGZ )
@@ -153,4 +161,3 @@ set( CPACK_PACKAGE_VERSION_PATCH ${VERSION_PATCH} )
 set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${VERSION_STRING}" )
 
 include( CPack )
-
