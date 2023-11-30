@@ -298,14 +298,14 @@ set_target_properties( crypto PROPERTIES
 
 if( ANDROID )
   set_target_properties( crypto PROPERTIES OUTPUT_NAME "crypto_1_1" )
-endif()
-
-if( MSVC )
+elseif( MSVC )
   if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
     set_target_properties( crypto PROPERTIES OUTPUT_NAME "crypto-1_1-x64" )
   elseif( CMAKE_SIZEOF_VOID_P EQUAL 4 )
     set_target_properties( crypto PROPERTIES OUTPUT_NAME "crypto-1_1" )
   endif()
+else()
+  set_target_properties( crypto PROPERTIES OUTPUT_NAME "crypto" )
 endif()
 
 install( TARGETS crypto

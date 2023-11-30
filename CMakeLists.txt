@@ -203,6 +203,15 @@ install( FILES
 
 install( DIRECTORY doc DESTINATION share )
 
+set( prefix      "${CMAKE_INSTALL_PREFIX}" )
+set( includedir  "include" )
+set( libdir      "lib" )
+get_target_property( libcrypto crypto OUTPUT_NAME )
+get_target_property( libssl ssl OUTPUT_NAME )
+configure_file(openssl.pc.in.cmake openssl.pc @ONLY)
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/openssl.pc
+  DESTINATION lib/pkgconfig)
+
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake IMMEDIATE @ONLY

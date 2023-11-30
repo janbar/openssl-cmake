@@ -54,14 +54,14 @@ set_target_properties( ssl PROPERTIES
 
 if( ANDROID )
   set_target_properties( ssl PROPERTIES OUTPUT_NAME "ssl_1_1" )
-endif()
-
-if( MSVC )
+elseif( MSVC )
   if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
     set_target_properties( ssl PROPERTIES OUTPUT_NAME "ssl-1_1-x64" )
   elseif( CMAKE_SIZEOF_VOID_P EQUAL 4 )
     set_target_properties( ssl PROPERTIES OUTPUT_NAME "ssl-1_1" )
   endif()
+else()
+  set_target_properties( ssl PROPERTIES OUTPUT_NAME "ssl" )
 endif()
 
 install( TARGETS ssl
